@@ -56,22 +56,22 @@
 		color = color * vNoise;
 		// light shader
 		
-		 vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
-		 vec3 normal = normalize(vTransformedNormal);		
+		 //vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
+		 //vec3 normal = normalize(vTransformedNormal);		
 		
 		 // specular
-		 vec3 eyeDirection = normalize(-vPosition.xyz);
-		 vec3 reflectionDirection = reflect(-lightDirection,normal);
+		 //vec3 eyeDirection = normalize(-vPosition.xyz);
+		 //vec3 reflectionDirection = reflect(-lightDirection,normal);
 
-		 float specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
+		 //float specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
 
 		 // diffuse
-		 float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
-		 vec3 lightWeighting = uAmbientColor
-			+ uPointLightingSpecularColor * specularLightWeighting
-            + uPointLightingDiffuseColor * diffuseLightWeighting;
+		 //float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
+		 //vec3 lightWeighting = uAmbientColor
+		//	+ uPointLightingSpecularColor * specularLightWeighting
+        //    + uPointLightingDiffuseColor * diffuseLightWeighting;
 
-		gl_FragColor = vec4(color * lightWeighting, 1.0);
+		gl_FragColor = vec4(color, 1.0);
 	}
 </script>
 <script id="shader-vs" type="x-shader/x-vertex">
@@ -418,7 +418,7 @@ function drawScene(){
 	
 	mat4.identity(mvMatrix);
 	
-	mat4.translate(mvMatrix, mvMatrix, [0, 20, -100]);
+	mat4.translate(mvMatrix, mvMatrix, [0, 20, -125]);
 	mat4.rotate(mvMatrix, mvMatrix, degToRad(yRot), [-1, 0, 0]);
 	mat4.rotate(mvMatrix, mvMatrix, degToRad(xRot), [0, -1, 0]);
 	mat4.rotate(mvMatrix, mvMatrix, degToRad(zRot), [0, 0, -1]);
