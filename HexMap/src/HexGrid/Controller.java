@@ -14,13 +14,15 @@ import java.io.IOException;
  */
 public class Controller{
     public static String createHexMesh() throws IOException{
-    	HexGrid obj = new HexGrid(51, 51, 2, 7);
+    	HexGrid obj = new HexGrid(51, 51, 2, 5);
         obj.buildGrid();
+        obj.centerPlane();
         obj.buildContinent();
         obj.setHeights();
         obj.setMountains();
         obj.assignVertices();
-        //obj.centerPlane();
+        obj.assignCentroids();
+        //obj.randomizeVertices();
         obj.computeNormals();
         obj.createBuffers();
         return obj.writeToJson();

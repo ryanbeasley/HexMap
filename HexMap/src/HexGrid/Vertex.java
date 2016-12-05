@@ -22,6 +22,8 @@ public class Vertex {
     ArrayList<Hex> adjHexes = new ArrayList<>();
     Vector3D normal;
     
+    double[] biome = new double[3];
+    
     public void computeCoord(){
         double sumx = 0;
         double sumy = 0;
@@ -97,5 +99,14 @@ public class Vertex {
             }
         }
         this.z = sumz / adjHexes.size();
+    }
+    
+    public void randomizeLocations(double radius){
+    	this.x = this.x + radius * Math.random()/6;
+    	this.y = this.y + radius * Math.random()/6;
+    	/*
+    	this.x = this.x + radius * NoiseGenerator.noise(this.x, this.y)/2;
+    	this.y = this.y + radius * NoiseGenerator.noise(this.x, this.y)/2;
+    	*/
     }
 }

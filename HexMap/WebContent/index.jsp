@@ -39,61 +39,35 @@
 
 		// assign biome
 
-		if (abs(vType.x - 1.0) < .1){
-			color = color + .3 * land.rgb;
+		if (abs(vType.x - 1.0) <= .5){
+			color = color + land.rgb;
 		}
-		else if (abs(vType.x - 2.0) < .1){
-			color = color + .3 * water.rgb;
+		else if (abs(vType.x - 2.0) <= .5){
+			color = color + water.rgb;
 		}
-		else if (abs(vType.x - 3.0) < .1){
-			color = color + .3 * coast.rgb;
+		else if (abs(vType.x - 3.0) <= .5){
+			color = color + coast.rgb;
 		}
-		else {
-			color = color + .3 * mountain.rgb;
+		else if (abs(vType.x - 4.0) <= .5){
+			color = color + mountain.rgb;
 		}
-
-		if (abs(vType.y - 1.0) < .1){
-			color = color + .3 * land.rgb;
-		}
-		else if (abs(vType.y - 2.0) < .1){
-			color = color + .3 * water.rgb;
-		}
-		else if (abs(vType.y - 3.0) < .1){
-			color = color + .3 * coast.rgb;
-		}
-		else {
-			color = color + .3 * mountain.rgb;
-		}
-
-		if (abs(vType.z - 1.0) < .1){
-			color = color + .3 * land.rgb;
-		}
-		else if (abs(vType.z - 2.0) < .1){
-			color = color + .3 * water.rgb;
-		}
-		else if (abs(vType.z - 3.0) < .1){
-			color = color + .3 * coast.rgb;
-		}
-		else {
-			color = color + .3 * mountain.rgb;
-		}
-
+		
 		// add noise
 		color = color * vNoise;
 		// light shader
 		
-		vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
-		vec3 normal = normalize(vTransformedNormal);		
+		 vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
+		 vec3 normal = normalize(vTransformedNormal);		
 		
-		// specular
-		vec3 eyeDirection = normalize(-vPosition.xyz);
-		vec3 reflectionDirection = reflect(-lightDirection,normal);
+		 // specular
+		 vec3 eyeDirection = normalize(-vPosition.xyz);
+		 vec3 reflectionDirection = reflect(-lightDirection,normal);
 
-		float specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
+		 float specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
 
-		// diffuse
-		float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
-		vec3 lightWeighting = uAmbientColor
+		 // diffuse
+		 float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
+		 vec3 lightWeighting = uAmbientColor
 			+ uPointLightingSpecularColor * specularLightWeighting
             + uPointLightingDiffuseColor * diffuseLightWeighting;
 
@@ -397,11 +371,10 @@ function loadMap() {
 	request.send();
 }
 
-var z = -150;
 var yrot = 0;
 var xrot = 0;
 var xRot = 0;
-var yRot = 45;
+var yRot = 60;
 var zRot = 0;
 
 function drawScene(){	
@@ -441,28 +414,31 @@ function drawScene(){
 	
 	//set matrix
 	
-	mat4.perspective(pMatrix, degToRad(45), gl.viewportWidth / gl.viewportHeight, 0.1, 1000.0);
+	mat4.perspective(pMatrix, degToRad(45), gl.viewportWidth / gl.viewportHeight, 0.1, 2000.0);
 	
 	mat4.identity(mvMatrix);
 	
-	mat4.translate(mvMatrix, mvMatrix, [-80, -40, z]);
+	mat4.translate(mvMatrix, mvMatrix, [0, 20, -100]);
 	mat4.rotate(mvMatrix, mvMatrix, degToRad(yRot), [-1, 0, 0]);
 	mat4.rotate(mvMatrix, mvMatrix, degToRad(xRot), [0, -1, 0]);
 	mat4.rotate(mvMatrix, mvMatrix, degToRad(zRot), [0, 0, -1]);
 	
 	
-	
+	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, grassTexture);
 	gl.uniform1i(shaderProgram.samplerGrassUniform, 0);
-
+	
+	gl.activeTexture(gl.TEXTURE1);
 	gl.bindTexture(gl.TEXTURE_2D, waterTexture);
 	gl.uniform1i(shaderProgram.samplerWaterUniform, 1);
 	
+	gl.activeTexture(gl.TEXTURE2);
 	gl.bindTexture(gl.TEXTURE_2D, coastTexture);
 	gl.uniform1i(shaderProgram.samplerCoastUniform, 2);
 	
-	gl.bindTexture(gl.TEXTURE_2D, snowyMountaintsTexture);
-	gl.uniform1i(shaderProgram.samplerSnowyMountainsUniform, 2);
+	gl.activeTexture(gl.TEXTURE3);
+	gl.bindTexture(gl.TEXTURE_2D, snowyMountainsTexture);
+	gl.uniform1i(shaderProgram.samplerSnowyMountainsUniform, 3);
 	
 	gl.bindBuffer(gl.ARRAY_BUFFER, mapVertexPositionBuffer);
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, mapVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -482,6 +458,10 @@ function drawScene(){
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 	setMatrixUniforms();
 	gl.drawElements(gl.TRIANGLES, indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+}
+
+function tick(){
+	
 }
 
 function webGLStart(){

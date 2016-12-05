@@ -152,16 +152,15 @@ public class HexGrid {
                     //if land
                 if (temp.biome[0] == 1.01 && countLand < 0){
                     temp.biome[0] = 3.01; //temp is coast
-                    temp.biome[1] = 3.01;
-                    temp.biome[2] = 3.01;
+                    temp.biome[1] = 3.01; //temp is coast
+                    temp.biome[2] = 3.01; //temp is coast
+
                 }
                 else if (temp.biome[0] == 2.01 && countLand > 0){
                     for (int i = 0; i < temp.adj.size(); i++){
                         //if ith neighbor biome is land
                         if (temp.adj.get(i).biome[0] == 1.01){
                             //ith neighbor biome is coast
-                            temp.adj.get(i).biome[0] = 3.01;
-                            temp.adj.get(i).biome[0] = 3.01;
                             temp.adj.get(i).biome[0] = 3.01;
                         }
                     }
@@ -324,8 +323,6 @@ public class HexGrid {
     private void setMountain(Hex h){
     	if (h.z > mountainThresh){
             h.biome[0] = 4.01; // mountains
-            h.biome[1] = 4.01;
-            h.biome[2] = 4.01;
         }
     }
     
@@ -395,6 +392,14 @@ public class HexGrid {
         }
     }
     
+    private boolean addHex(Vertex v, int i, int j){
+        if (i >= 0 && i < numColumns && j >= 0 && j < numRows){
+            v.adjHexes.add(grid[i][j]);
+            return true;
+        }
+        return false;
+    }
+    
     public void assignCentroids(){
     	for (int i = 0; i < numColumns; i++){
     		for (int j = 0; j < numRows; j++){
@@ -404,14 +409,31 @@ public class HexGrid {
     				Vertex v1 = h.vertices[k%6];
     				Vertex v2 = h.vertices[(k+1)%6];
     				
-    				temp.x = (v1.x + v2.x + h.x) / 3.0;
-    				temp.y = (v1.y + v2.y + h.y) / 3.0;
-    				temp.z = (v1.z + v2.z + h.z) / 3.0;
+    				temp.x = (v1.x + v2.x + 0.5*h.x) / 2.5;
+    				temp.y = (v1.y + v2.y + 0.5*h.y) / 2.5;    				
+    				temp.z = (v1.z + v2.z + 0.5*h.z) / 2.5;
     				
-    				grid[i][j].centroids[k] = temp;
+    				temp.biome[0] = h.biome[0];
+    				temp.biome[1] = h.biome[1];
+    				temp.biome[2] = h.biome[2];
+    				
+    				h.centroids[k] = temp;
     			}
     		}
     	}
+    }
+    
+    private Hex findAdjHex(Hex h, Vertex v1, Vertex v2){
+    	for (int i = 0; i < v1.adjHexes.size(); i++){
+    		Hex temp1 = v1.adjHexes.get(i);
+    		for (int j = 0; j < v2.adjHexes.size(); j++){
+    			Hex temp2 = v2.adjHexes.get(j);
+    			if (temp1.equals(temp2) && !temp1.equals(h)){
+    				return temp1;
+    			}
+    		}
+    	}
+    	return null;
     }
     
     public void centerPlane(){
@@ -426,31 +448,16 @@ public class HexGrid {
     			Hex h = grid[i][j];
     			h.x = h.x - centerX;
     			h.y = h.y - centerY;
-    			for (int k = 0; k < 6; k++){
-    				/*
-    				Vertex c = h.centroids[k];
-    				c.x = c.x - centerX;
-    				c.y = c.y - centerY;
-    				*/
-    			}
-    		}
-    	}
-    	
-    	for (int i = 0; i < numColumns + 1; i++){
-    		for (int j = 0; j < 2*numRows+2; j++){
-    			Vertex v1 = vertices[i][j];
-    			v1.x = v1.x - centerX;
-    			v1.y = v1.y - centerY;
     		}
     	}
     }
     
-    private boolean addHex(Vertex v, int i, int j){
-        if (i >= 0 && i < numColumns && j >= 0 && j < numRows){
-            v.adjHexes.add(grid[i][j]);
-            return true;
-        }
-        return false;
+    public void randomizeVertices(){
+    	for (int i = 0; i < numColumns+1; i++){
+            for (int j = 0; j < 2*numRows+2; j++){
+            	vertices[i][j].randomizeLocations(radius);
+            }
+    	}
     }
     
     private int distance(Hex a, Hex b){
@@ -464,9 +471,14 @@ public class HexGrid {
                 Vector3D normal = new Vector3D();
                 for (int k = 0; k < 6; k++){
                     Vertex v1 = center.vertices[k%6];
-                    Vertex v2 = center.vertices[(k+1)%6];                   
+                    Vertex v2 = center.vertices[(k+1)%6];
+                    Vertex centroid = center.centroids[k%6];                   
                     
-                    normal = Vector3D.add(normal, Vector3D.computeNormal(center, v1, v2));
+                    centroid.normal = Vector3D.computeNormal(center, v1, v2);
+                    
+                    normal = Vector3D.add(normal, centroid.normal);
+                    
+                    centroid.normal = Vector3D.normalize(centroid.normal);
                 }
                 normal = Vector3D.normalize(normal);
                 center.normal = normal;
@@ -501,12 +513,12 @@ public class HexGrid {
                 
                 buffer.add(center.x);
                 buffer.add(center.y);
-                buffer.add(center.z);
-                
+                buffer.add(center.z);               
+
                 biomeBuffer.add(center.biome[0]);
                 biomeBuffer.add(center.biome[1]);
                 biomeBuffer.add(center.biome[2]);
-
+                
                 normBuffer.add(center.normal.x);
                 normBuffer.add(center.normal.y);
                 normBuffer.add(center.normal.z);
@@ -517,37 +529,100 @@ public class HexGrid {
                 textureBuffer.add(0.5);
                 
                 for (int k = 0; k < 6; k++){         
-                    Vertex v1 = center.vertices[k%6];
-                    
-                    
-                    for (int b = 0; b < v1.adjHexes.size(); b++){
-                        biomeBuffer.add(v1.adjHexes.get(b).biome[0]);
+                	Vertex v0;
+                	Vertex v1 = center.vertices[k%6];
+                    Vertex v2 = center.vertices[(k+1)%6];
+                    if (k == 0){
+                    	v0 = center.vertices[5];
                     }
-                    if (v1.adjHexes.size() == 1)
-                        biomeBuffer.add(center.biome[0]);
-                    if (v1.adjHexes.size() <=2)
-                        biomeBuffer.add(center.biome[0]);
+                    else {
+                    	v0 = center.vertices[(k-1)%6];
+                    }
+                    Vertex c1 = center.centroids[k%6];
+                    Hex h;
                     
                     buffer.add(v1.x);
                     buffer.add(v1.y);
                     buffer.add(v1.z);
+                    biomeBuffer.add(center.biome[0]);
+                    
+                    if ((k & 1) == 0){
+                    	if ((h=findAdjHex(center, v1, v2)) != null){
+                        	biomeBuffer.add(h.biome[0]);
+                        }
+                        else {
+                        	biomeBuffer.add(center.biome[0]);
+                        }
+                        
+                        if ((h=findAdjHex(center, v1, v0)) != null){
+                        	biomeBuffer.add(h.biome[0]);
+                        }
+                        else {
+                        	biomeBuffer.add(center.biome[0]);
+                        }
+                    }
+                    else {
+                    	if ((h=findAdjHex(center, v1, v0)) != null){
+                        	biomeBuffer.add(h.biome[0]);
+                        }
+                        else {
+                        	biomeBuffer.add(center.biome[0]);
+                        }
+                    	if ((h=findAdjHex(center, v1, v2)) != null){
+                        	biomeBuffer.add(h.biome[0]);
+                        }
+                        else {
+                        	biomeBuffer.add(center.biome[0]);
+                        }
+                    }
+                    
                     
                     normBuffer.add(v1.normal.x);
                     normBuffer.add(v1.normal.y);
                     normBuffer.add(v1.normal.z);
                     
-                    double s = .5 * (1 + Math.cos((4+k)*Math.PI/3));
-                    double t = .5 * (1 + Math.cos((4+k)*Math.PI/3));
+                    double s = .5 * (v1.x - center.x) / radius + .5;
+                    double t = .5 * (v1.y - center.y) / radius + .5;
+                    textureBuffer.add(s);
+                    textureBuffer.add(t);                                       
+                    
+                    buffer.add(c1.x);
+                    buffer.add(c1.y);
+                    buffer.add(c1.z);
+                    biomeBuffer.add(center.biome[0]);
+                    biomeBuffer.add(center.biome[0]);
+                    biomeBuffer.add(center.biome[0]);
+                    
+                    normBuffer.add(c1.normal.x);
+                    normBuffer.add(c1.normal.y);
+                    normBuffer.add(c1.normal.z);
+                    
+                    s = .5 * (c1.x - center.x) / radius + .5;
+                    t = .5 * (c1.y - center.y) / radius + .5;
                     textureBuffer.add(s);
                     textureBuffer.add(t);
                     
                     noiseBuffer.add((Math.random()+7)/8);
+                    noiseBuffer.add((Math.random()+7)/8);
                     
-                    //build a triangle                   
+                    int c = i * numRows * 13 + j * 13;
+                    int vi = i * numRows * 13 + j * 13 + 2*(k % 6) + 1;
+                    int cent = i * numRows * 13 + j * 13 + 2*(k % 6) + 2;
+                    int vf = i * numRows * 13 + j * 13 + 2*((k+1) % 6) + 1;
                     
-                    indexBuffer.add(i*numRows*7+j*7);
-                    indexBuffer.add(i*numRows*7+j*7+k%6+1);
-                    indexBuffer.add(i*numRows*7+j*7+(k+1)%6+1);
+                    //make triangle 1
+                    indexBuffer.add(c);
+                    indexBuffer.add(vi);                    
+                    indexBuffer.add(cent);
+                    //make triangle 2
+                    indexBuffer.add(cent);
+                    indexBuffer.add(vi);
+                    indexBuffer.add(vf);
+                    //make triangle 3
+                    indexBuffer.add(c);
+                    indexBuffer.add(vf);
+                    indexBuffer.add(cent);
+                    
                 }
             }                   
         }
@@ -625,11 +700,16 @@ public class HexGrid {
         obj.put("noise", noiseList);
         
         File fp = new File("D:\\Dev\\apache-tomcat-9.0.0.M13\\wtpwebapps\\HexMap\\test.json");
+        File fp2 = new File("test.json");
         
         FileWriter file = new FileWriter(fp);
+        FileWriter file2 = new FileWriter(fp2);
         file.write(obj.toJSONString());
         file.flush();
         file.close();
+        file2.write(obj.toJSONString());
+        file2.flush();
+        file2.close();
         
         return "hello";
         
